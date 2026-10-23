@@ -72,6 +72,7 @@ void nftnl_flowtable_unset(struct nftnl_flowtable *c, uint16_t attr)
 		break;
 	case NFTNL_FLOWTABLE_HOOKNUM:
 	case NFTNL_FLOWTABLE_PRIO:
+	case NFTNL_FLOWTABLE_SIZE:
 	case NFTNL_FLOWTABLE_USE:
 	case NFTNL_FLOWTABLE_FAMILY:
 	case NFTNL_FLOWTABLE_FLAGS:
