@@ -114,8 +114,10 @@ int nftnl_batch_is_supported(void)
 	if (nl == NULL)
 		return -1;
 
-	if (mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID) < 0)
+	if (mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID) < 0) {
+		mnl_socket_close(nl);
 		return -1;
+	}
 
 	b = mnl_nlmsg_batch_start(buf, sizeof(buf));
 
@@ -156,5 +158,6 @@ int nftnl_batch_is_supported(void)
 	return (ret == -1 && errno == EINVAL) ? 1 : 0;
 err:
 	mnl_nlmsg_batch_stop(b);
+	mnl_socket_close(nl);
 	return -1;
 }
