@@ -139,13 +139,15 @@ void __noreturn __abi_breakage(const char *file, int line, const char *reason)
 int nftnl_set_str_attr(const char **dptr, uint32_t *flags,
 		       uint16_t attr, const void *data, uint32_t data_len)
 {
+	char *new = strndup(data, data_len);
+
+	if (!new)
+		return -1;
+
 	if (*flags & (1 << attr))
 		xfree(*dptr);
 
-	*dptr = strndup(data, data_len);
-	if (!*dptr)
-		return -1;
-
+	*dptr = new;
 	*flags |= (1 << attr);
 	return 0;
 }
@@ -196,14 +198,14 @@ char *nftnl_attr_get_ifname(const struct nlattr *attr)
 int nftnl_parse_str_attr(const struct nlattr *tb, int attr,
 			 const char **field, uint32_t *flags)
 {
+	const char *s;
+	uint32_t len;
+
 	if (!tb)
 		return 0;
 
-	if (*flags & (1 << attr))
-		xfree(*field);
-	*field = strdup(mnl_attr_get_str(tb));
-	if (!*field)
-		return -1;
-	*flags |= (1 << attr);
-	return 0;
+	len = mnl_attr_get_payload_len(tb);
+	s = mnl_attr_get_str(tb);
+
+	return nftnl_set_str_attr(field, flags, attr, s, len);
 }
