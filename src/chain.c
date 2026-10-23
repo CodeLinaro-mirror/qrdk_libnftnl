@@ -46,10 +46,7 @@ struct nftnl_chain {
 	uint32_t	flags;
 	uint32_t	chain_id;
 
-	struct {
-		void		*data;
-		uint32_t	len;
-	} user;
+	struct nftnl_mem_blob user_data;
 
 	struct list_head rule_list;
 };
@@ -125,7 +122,7 @@ void nftnl_chain_free(const struct nftnl_chain *c)
 	if (c->flags & (1 << NFTNL_CHAIN_DEV))
 		xfree(c->dev);
 	if (c->flags & (1 << NFTNL_CHAIN_USERDATA))
-		xfree(c->user.data);
+		nftnl_mem_blob_free(&c->user_data);
 	if (c->flags & (1 << NFTNL_CHAIN_DEVICES))
 		nftnl_str_array_clear((struct nftnl_str_array *)&c->dev_array);
 	xfree(c);
@@ -172,7 +169,7 @@ void nftnl_chain_unset(struct nftnl_chain *c, uint16_t attr)
 		nftnl_str_array_clear(&c->dev_array);
 		break;
 	case NFTNL_CHAIN_USERDATA:
-		xfree(c->user.data);
+		nftnl_mem_blob_free(&c->user_data);
 		break;
 	default:
 		return;
@@ -249,14 +246,9 @@ int nftnl_chain_set_data(struct nftnl_chain *c, uint16_t attr,
 		memcpy(&c->chain_id, data, sizeof(c->chain_id));
 		break;
 	case NFTNL_CHAIN_USERDATA:
-		if (c->flags & (1 << NFTNL_CHAIN_USERDATA))
-			xfree(c->user.data);
-
-		c->user.data = malloc(data_len);
-		if (!c->user.data)
+		if (nftnl_set_udata_attr(&c->user_data, &c->flags,
+					attr, data, data_len) < 0)
 			return -1;
-		memcpy(c->user.data, data, data_len);
-		c->user.len = data_len;
 		break;
 	}
 	c->flags |= (1 << attr);
@@ -360,8 +352,7 @@ const void *nftnl_chain_get_data(const struct nftnl_chain *c, uint16_t attr,
 		*data_len = sizeof(uint32_t);
 		return &c->chain_id;
 	case NFTNL_CHAIN_USERDATA:
-		*data_len = c->user.len;
-		return c->user.data;
+		return nftnl_mem_blob_get(&c->user_data, data_len);
 	}
 	return NULL;
 }
@@ -494,7 +485,7 @@ void nftnl_chain_nlmsg_build_payload(struct nlmsghdr *nlh, const struct nftnl_ch
 	if (c->flags & (1 << NFTNL_CHAIN_ID))
 		mnl_attr_put_u32(nlh, NFTA_CHAIN_ID, htonl(c->chain_id));
 	if (c->flags & (1 << NFTNL_CHAIN_USERDATA))
-		mnl_attr_put(nlh, NFTA_CHAIN_USERDATA, c->user.len, c->user.data);
+		nftnl_mem_blob_attr_put(nlh, NFTA_CHAIN_USERDATA, &c->user_data);
 }
 
 EXPORT_SYMBOL(nftnl_chain_rule_add);

@@ -55,7 +55,7 @@ void nftnl_obj_free(const struct nftnl_obj *obj)
 	if (obj->flags & (1 << NFTNL_OBJ_NAME))
 		xfree(obj->name);
 	if (obj->flags & (1 << NFTNL_OBJ_USERDATA))
-		xfree(obj->user.data);
+		nftnl_mem_blob_free(&obj->user_data);
 	if (obj->flags & (1 << NFTNL_OBJ_TUNNEL_OPTS)) {
 		nftnl_tunnel_opts_free(obj->data.tunnel.tun_opts);
 		xfree(obj->data.tunnel.tun_opts);
@@ -84,7 +84,7 @@ void nftnl_obj_unset(struct nftnl_obj *obj, uint16_t attr)
 		xfree(obj->name);
 		break;
 	case NFTNL_OBJ_USERDATA:
-		xfree(obj->user.data);
+		nftnl_mem_blob_free(&obj->user_data);
 		break;
 	case NFTNL_OBJ_TYPE:
 	case NFTNL_OBJ_FAMILY:
@@ -135,14 +135,9 @@ int nftnl_obj_set_data(struct nftnl_obj *obj, uint16_t attr,
 		memcpy(&obj->handle, data, sizeof(obj->handle));
 		break;
 	case NFTNL_OBJ_USERDATA:
-		if (obj->flags & (1 << NFTNL_OBJ_USERDATA))
-			xfree(obj->user.data);
-
-		obj->user.data = malloc(data_len);
-		if (!obj->user.data)
+		if (nftnl_set_udata_attr(&obj->user_data, &obj->flags,
+					attr, data, data_len) < 0)
 			return -1;
-		memcpy(obj->user.data, data, data_len);
-		obj->user.len = data_len;
 		break;
 	default:
 		if (!obj->ops ||
@@ -226,8 +221,7 @@ const void *nftnl_obj_get_data(const struct nftnl_obj *obj, uint16_t attr,
 		*data_len = sizeof(uint64_t);
 		return &obj->handle;
 	case NFTNL_OBJ_USERDATA:
-		*data_len = obj->user.len;
-		return obj->user.data;
+		return nftnl_mem_blob_get(&obj->user_data, data_len);
 	default:
 		if (obj->ops)
 			return obj->ops->get(obj, attr, data_len);
@@ -290,7 +284,7 @@ void nftnl_obj_nlmsg_build_payload(struct nlmsghdr *nlh,
 	if (obj->flags & (1 << NFTNL_OBJ_HANDLE))
 		mnl_attr_put_u64(nlh, NFTA_OBJ_HANDLE, htobe64(obj->handle));
 	if (obj->flags & (1 << NFTNL_OBJ_USERDATA))
-		mnl_attr_put(nlh, NFTA_OBJ_USERDATA, obj->user.len, obj->user.data);
+		nftnl_mem_blob_attr_put(nlh, NFTA_OBJ_USERDATA, &obj->user_data);
 	if (obj->ops) {
 		struct nlattr *nest = mnl_attr_nest_start(nlh, NFTA_OBJ_DATA);
 
