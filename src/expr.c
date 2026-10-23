@@ -284,7 +284,7 @@ struct nftnl_expr *nftnl_expr_parse(struct nlattr *attr)
 	return expr;
 
 err2:
-	xfree(expr);
+	nftnl_expr_free(expr);
 err1:
 	return NULL;
 }
