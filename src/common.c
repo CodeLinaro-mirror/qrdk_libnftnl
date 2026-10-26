@@ -120,6 +120,10 @@ int nftnl_batch_is_supported(void)
 	}
 
 	b = mnl_nlmsg_batch_start(buf, sizeof(buf));
+	if (!b) {
+		mnl_socket_close(nl);
+		return -1;
+	}
 
 	nftnl_batch_begin(mnl_nlmsg_batch_current(b), seq++);
 	mnl_nlmsg_batch_next(b);
