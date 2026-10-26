@@ -166,7 +166,7 @@ static int nftnl_verdict_parse_cb(const struct nlattr *attr, void *data)
 static int
 nftnl_parse_verdict(union nftnl_data_reg *data, const struct nlattr *attr, int *type)
 {
-	struct nlattr *tb[NFTA_VERDICT_MAX+1];
+	struct nlattr *tb[NFTA_VERDICT_MAX+1] = {};
 
 	if (mnl_attr_parse_nested(attr, nftnl_verdict_parse_cb, tb) < 0)
 		return -1;

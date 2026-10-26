@@ -320,7 +320,7 @@ static int nftnl_trace_parse_verdict_cb(const struct nlattr *attr, void *data)
 static int nftnl_trace_parse_verdict(const struct nlattr *attr,
 				     struct nftnl_trace *t)
 {
-	struct nlattr *tb[NFTA_VERDICT_MAX+1];
+	struct nlattr *tb[NFTA_VERDICT_MAX+1] = {};
 
 	if (mnl_attr_parse_nested(attr, nftnl_trace_parse_verdict_cb, tb) < 0)
 		return -1;
