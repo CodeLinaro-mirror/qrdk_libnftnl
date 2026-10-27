@@ -88,8 +88,10 @@ void nftnl_set_elem_unset(struct nftnl_set_elem *s, uint16_t attr)
 		break;
 	case NFTNL_SET_ELEM_EXPR:
 	case NFTNL_SET_ELEM_EXPRESSIONS:
-		list_for_each_entry_safe(expr, tmp, &s->expr_list, head)
+		list_for_each_entry_safe(expr, tmp, &s->expr_list, head) {
+			list_del(&expr->head);
 			nftnl_expr_free(expr);
+		}
 		break;
 	case NFTNL_SET_ELEM_OBJREF:
 		xfree(s->objref);
@@ -167,8 +169,10 @@ __nftnl_set_elem_set(struct nftnl_set_elem *s, uint16_t attr, const void *data,
 			return -1;
 		break;
 	case NFTNL_SET_ELEM_EXPR:
-		list_for_each_entry_safe(expr, tmp, &s->expr_list, head)
+		list_for_each_entry_safe(expr, tmp, &s->expr_list, head) {
+			list_del(&expr->head);
 			nftnl_expr_free(expr);
+		}
 
 		expr = (void *)data;
 		list_add(&expr->head, &s->expr_list);
