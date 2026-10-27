@@ -253,8 +253,6 @@ EXPORT_SYMBOL(nftnl_set_get_data);
 const void *nftnl_set_get_data(const struct nftnl_set *s, uint16_t attr,
 			       uint32_t *data_len)
 {
-	struct nftnl_expr *expr;
-
 	if (!(s->flags & (1 << attr)))
 		return NULL;
 
@@ -313,9 +311,11 @@ const void *nftnl_set_get_data(const struct nftnl_set *s, uint16_t attr,
 	case NFTNL_SET_USERDATA:
 		return nftnl_mem_blob_get(&s->user_data, data_len);
 	case NFTNL_SET_EXPR:
-		list_for_each_entry(expr, &s->expr_list, head)
-			break;
-		return expr;
+		*data_len = 0;
+		if (list_empty(&s->expr_list))
+			return NULL;
+
+		return list_entry(s->expr_list.next, struct nftnl_expr, head);
 	}
 	return NULL;
 }
