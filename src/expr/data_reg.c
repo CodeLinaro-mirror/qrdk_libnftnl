@@ -155,7 +155,7 @@ static int nftnl_verdict_parse_cb(const struct nlattr *attr, void *data)
 			abi_breakage();
 		break;
 	case NFTA_VERDICT_CHAIN:
-		if (mnl_attr_validate(attr, MNL_TYPE_STRING) < 0)
+		if (mnl_attr_validate(attr, MNL_TYPE_NUL_STRING) < 0)
 			abi_breakage();
 		break;
 	}

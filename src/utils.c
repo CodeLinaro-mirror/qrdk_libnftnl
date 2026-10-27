@@ -200,14 +200,15 @@ void nftnl_attr_put_ifname(struct nlmsghdr *nlh, const char *ifname)
 
 char *nftnl_attr_get_ifname(const struct nlattr *attr)
 {
+	uint16_t dlen = mnl_attr_get_payload_len(attr);
 	const char *dev = mnl_attr_get_str(attr);
 	char buf[IFNAMSIZ];
 
 	switch (mnl_attr_get_type(attr)) {
 	case NFTA_DEVICE_NAME:
-		return strdup(dev);
+		return strndup(dev, dlen);
 	case NFTA_DEVICE_PREFIX:
-		snprintf(buf, IFNAMSIZ, "%s*", dev);
+		snprintf(buf, IFNAMSIZ, "%.*s*", (int)dlen, dev);
 		return strdup(buf);
 	default:
 		return NULL;
