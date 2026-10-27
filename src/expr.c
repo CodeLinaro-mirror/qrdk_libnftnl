@@ -251,7 +251,7 @@ static int nftnl_rule_parse_expr_cb(const struct nlattr *attr, void *data)
 
 	switch (type) {
 	case NFTA_EXPR_NAME:
-		if (mnl_attr_validate(attr, MNL_TYPE_STRING) < 0)
+		if (mnl_attr_validate(attr, MNL_TYPE_NUL_STRING) < 0)
 			abi_breakage();
 		break;
 	case NFTA_EXPR_DATA:
@@ -270,6 +270,9 @@ struct nftnl_expr *nftnl_expr_parse(struct nlattr *attr)
 	struct nftnl_expr *expr;
 
 	if (mnl_attr_parse_nested(attr, nftnl_rule_parse_expr_cb, tb) < 0)
+		goto err1;
+
+	if (!tb[NFTA_EXPR_NAME])
 		goto err1;
 
 	expr = nftnl_expr_alloc(mnl_attr_get_str(tb[NFTA_EXPR_NAME]));
