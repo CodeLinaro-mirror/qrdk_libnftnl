@@ -56,7 +56,8 @@ void nftnl_obj_free(const struct nftnl_obj *obj)
 		xfree(obj->name);
 	if (obj->flags & (1 << NFTNL_OBJ_USERDATA))
 		nftnl_mem_blob_free(&obj->user_data);
-	if (obj->flags & (1 << NFTNL_OBJ_TUNNEL_OPTS)) {
+	if (obj->ops && obj->ops->type == NFT_OBJECT_TUNNEL &&
+	    obj->flags & (1 << NFTNL_OBJ_TUNNEL_OPTS)) {
 		nftnl_tunnel_opts_free(obj->data.tunnel.tun_opts);
 		xfree(obj->data.tunnel.tun_opts);
 	}
@@ -86,13 +87,21 @@ void nftnl_obj_unset(struct nftnl_obj *obj, uint16_t attr)
 	case NFTNL_OBJ_USERDATA:
 		nftnl_mem_blob_free(&obj->user_data);
 		break;
-	case NFTNL_OBJ_TYPE:
 	case NFTNL_OBJ_FAMILY:
 	case NFTNL_OBJ_USE:
 	case NFTNL_OBJ_HANDLE:
 		break;
+	case NFTNL_OBJ_TYPE:
+		/* don't allow to morph one object type
+		 * to another.
+		 */
+		return;
 	default:
-		break;
+		/* object type specific. Clearing e.g.
+		 * NFTNL_OBJ_TUNNEL_OPTS results
+		 * in memory leak.
+		 */
+		return;
 	}
 
 	obj->flags &= ~(1 << attr);
@@ -121,6 +130,8 @@ int nftnl_obj_set_data(struct nftnl_obj *obj, uint16_t attr,
 		return nftnl_set_str_attr(&obj->name, &obj->flags,
 					  attr, data, data_len);
 	case NFTNL_OBJ_TYPE:
+		if (obj->ops)	/* don't permit object type change */
+			return -1;
 		obj->ops = nftnl_obj_ops_lookup(*((uint32_t *)data));
 		if (!obj->ops)
 			return -1;
