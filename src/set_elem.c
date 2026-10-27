@@ -595,7 +595,7 @@ nftnl_set_elem_list_parse_attr_cb(const struct nlattr *attr, void *data)
 	switch(type) {
 	case NFTA_SET_ELEM_LIST_TABLE:
 	case NFTA_SET_ELEM_LIST_SET:
-		if (mnl_attr_validate(attr, MNL_TYPE_STRING) < 0)
+		if (mnl_attr_validate(attr, MNL_TYPE_NUL_STRING) < 0)
 			abi_breakage();
 		break;
 	case NFTA_SET_ELEM_LIST_ELEMENTS:
