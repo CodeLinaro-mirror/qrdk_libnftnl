@@ -19,7 +19,7 @@
 
 #define __noreturn	__attribute__((__noreturn__))
 
-#define xfree(ptr)	free((void *)ptr);
+#define xfree(ptr)	free((void *)ptr)
 
 #define div_round_up(n, d)	(((n) + (d) - 1) / (d))
 
